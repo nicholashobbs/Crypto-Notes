@@ -1,154 +1,139 @@
 # Notes on Crypto
 
-# Blockchain
+# Bitcoin and Blockchain
 
-a blockchain is a decentralized platform that runs smart contracts. a giant worldwide computer where each node has a copy of all the data. code runs in smart contracts which are immutable
+A blockchain is a decentralized platform that runs smart contracts, essentially a giant worldwide computer where each node has a copy of all the data. It is a globally shared, transactional database. The network timestamps transactions and hashes them into a chain of hash-based proof of work. Transactions are bundled into groups called blocks which are processed by miners The longest chain is proof that the majority of the pool of computing power has agreed on of the sequence of transactions that the network has witnessed.
 
-what is a cryptocurrency
+In order to change something on the blockchain, you must send a transaction which is cryptographically signed and which is agreed upon by the network. If two transactions contradict, whichever is first is accepted
 
-what is mining
+An electronic coin is a chain of digital signatures - each owner transfers the coin to the next by digitally signing a hash of the previous transaction and the public key of the next owner and adding this to the end of the coin. 
 
-blockchain is a public ledger of transactions, but with digital signatures
+The core of Bitcoin is a timestamp server, which takes a hash of a block of transactions to be timestamped, a hash of the previous block, and attempts to find a nonce which in combination with this data gives the block's hash the required number of zero bits. 
 
-each transaction has an index
+The key of this protocol is that nothing in the block can then be changed without redoing the work of finding this nonce.
 
-a digital signature is a function of a private key and a message
+Mining refers to the process of incrementing and testing nonces in order to mine the block. The first transaction of the next block is a special transaction which generates a set amount of bitcoin and gives it to the miner.
 
-verifying any transaction requires knowledge of all previous transactions
+The steps to run the network:
 
-the history of transaction is the currency
+1. New transactions are broadcast
+2. Each node collects transactions into a block
+3. They work on finding a proof of work for this block
+4. Once the nonce is found, it is broadcast to all nodes
+5. Nodes accept the block only if the transactions are valid (not spent)
+6. Acceptance of the block is indicated by working on creating the next block
 
-everybody keeps a copy
+If two nodes broadcast different versions, the other nodes in the network will save both branches until the next proof of work is found and one branch becomes longer.
 
-the block is a list of transactions + a number that makes 30 zeroes in a SHA256 hash
-
-vault/wallet 
+Transactions are hashed into a merkle tree to save space.
 
 # Ethereum
 
-a general purpose blockchain with VM running on it
+Ethereum is a general purpose blockchain with VM (the EVM) running on it, with a native currency called Ether.
 
-ether is the currency of ethereum
+It addresses several shortcomings of Bitcoin identified in the Ethereum whitepaper:
 
-one wei = 10^-18 ether
+Lack of Turing completeness. Bitcoin doesn't support all computation - it is missing loops for example
 
-an address/account on ethereum is used to track a balance - it has a private key (password) and a public key (username)
+Value-Blindness UTXO script cannot provide fine-grained control over amount that can be withdrawn
 
-in order to change a balance and hack the blockchain, you would need the computing power to change all previous transactions
+Lack of State - UTXO can only be spent or unspent, it doesn't keep any internal state besides this.
 
-gas is the cost of transactions on ethereum
+Blockchain-blindness - UTXO are not aware of nonce, previous hash, and other data about the blockchain
 
-smart contracts are programs which are accessible to everyone on the network
+Ethereum intends to build a generalized framework which can imprrove upon scripting, altcoins and onchain protocols, and allow developers to create arbitrary applications
 
-ethereum allows you to create your own token - ERC 20 describes the requirements for doing so
+The state of ethereum is made up of objects called accounts - each has a 20 byte address. State transitions are transfers of value and information between accounts. Each account has four fields:
 
-ERC 20 - fungible
+A nonce (counter to ensure transactions happen only once), an ether balance, a contract code, and storage (empty by default)
 
-ERC 721 - non-fungible
+Ether is used to pay transaction keys. 
 
-EVM is the ethereum virtual machine
+There are two types of accounts - externally owned (controlled by private keys) and contract accounts, controlled by code. Externally owned accounts have no code, and messages can be sent from them by creating and signing a transaction. 
 
-Dapp - once a dapp is deployed it is permanently on the blockchain and can't be fixed
+For externally owned accounts, the address is the public key.
 
-It consists of 3 parts - smart contracts, testing, and front end
+For smart contracts, the address is determined at the time of creation
 
-transaction
+Messages in Ethereum are similar to transactions in Bitcoin, with three differences. 
 
-receipt - contains transactionHash, blockHas, mined, from, to, events
+1. Messages can be created by external entity or a contract
+2. Messages can contain data
+3. The recipient, if it is a contract, has the option to return a response
 
-gwei
+Transaction in Ethereum refers to a signed data package that stores a message to be sent from an externally owned account. They can contain the recipient of the message, a signature, an amount of ether, as well as STARTGAS (a limit to the amount of gas a transaction can use) and GASPRICE (the amount to pay the miner per step). If a contract runs out of gas, all changes revert, except for the payment of fees. If a transaction stops, any remaining gas is returned to the sender.  
 
-location
+Every transaction has a message call which can create more message calls
 
-hash
+Contracts have equivalent powers to external accounts. 
 
-ethereum clients - GETH, Parity, Trinity
+Ethereum state transition function APPLY(S,TX) → S':
 
-The original Ethereum is limited by TPS, block time, duplicate responsibility. Ethereum 2.0 is a proposed set of solutions which include:
+1. Check if the transaction is well formed, signature is valid, and nonce matches what is in sender's account
+2. Calculate transaction fee, subtract from sender's account balance, increment sender's nonce
+3. Initialize GAS, take off an amount per byte to pay for the transaction
+4. Transfer transaction value from sender's account to receiving account. If receiving account doesn't exist, create it. If it is a contract, run contract's code. If it runs out of gas, stop
+5. If value transfer failed because of insufficient money or gas, revert all state changes, and add fees to miner's account
+6. Otherwise, refund fees for all remaining gas, and send fees paid to the miner
 
-layer 1 (in ethereum): sharding - breaks up network into groups of computers and proof of stake (casper) which reduces block time and helps scaling
+EVM code consists of a series of bytes, each representing an operation.
 
-layer 2 (on top of ethereum):plasma allows certain stuff to happen on a side chain, state channels are 2 way communication channels which do work on the side and then put the result back onto the block chain
+Operations have access to three types of space
 
-Native Assets
+- The stack, a last-in first-out container with 32 byte values. This is where all computations are performed.
+- Memory - infinitely expandable byte array. Freshly cleared for every message call
+- Long term storage - key value store of 32 byte values. This is persistent, whereas the other two reset after computation ends.
 
-Tokens
+Code can access value, sender, data of incoming message, as well as block header data, and return a byte array as output. 
 
-ethereum research forum 
-
-solc - solidity compiler
-
-web3 - library to communicate with clients
-
-remix - a solidity IDE
-
-truffle - a framework for dapps written in node.js
-
-ganache - a local dev environment for blockchain
-
-metamask - an ethereum wallet packaged as a browser extension
-
-a dapp involves communication from wallet to frontend to smart contract 
-
-# Smart Contracts
-
-written in solidity, vyper, LLL
-
-browser on your computer interacts with a website, which interacts with the blockchain, which interacts with smart contracts
-
-eth blockchain includes EVM, storage, and consensus and runs on top of os and hardware
-
-the building blocks of dapps
-
-1. code contract
-    1. pragma statement
-    2. contract Name {}
-    3. define state variables in contract
-    4. define functions in contract `function add(uint id) public{}`
-    5. create js test file in tests/test
-        1. `const contract = artifacts.require('contract');`
-        2. `contract('Name', () => {})`
-        3. `it()`, computations assert
-2. `truffle develop`
-3. deploy contract `migrate --reset`
-4. copy ABI/address 
-5. install frontend dependencies `npm install` and `npm start`
-6. instantiate web3
-7. instantiate contract instance
-8. call/transact with contract and get/modify data
+Every account has storage.
 
 # Solidity
 
-a contract oriented, statically typed, compiled language
+## Basics
 
-compiling produces and abi as well as bytecode
+Solidity is a contract oriented, statically typed, compiled language.
 
-Wallet communicates with frontend on clientside. frontend communicates with server and an ethereum node. ethereum node communicates with smart contract on blockchain
+A contract in solidity is roughly equivalent to a class in a regular Object Oriented language. Contracts have state variables (stored permanently), functions (which have internal/external, specific visibility, accept parameters, and return variables) modifiers (which do not support overloading), events (interfaces with EVM logging), structs (custom data structures which group variables), enums (which identify a finite set of constant options, and inheritance. In solidity, undefined/null does not exist, but variables always have a default value, which is different for each type. You can handle unexpected values with revert statements.
 
-Structure of file
+Contracts are structured as follows:
 
-inheritance
+1. Pragma Statement (version)
+2. Imports
+3. Contract Declarations
+    1. State Variables
+    2. Functions
+        1. define internal/external, visibility, returns, ???, arguments (and memory), modifiers
+        2. local variables
+        3. special functions:
+            1. constructor() public
+            2. receive()
+            3. fallback()
+            4. selfdestruct(receiver)
+4. Comments - // and /**/ for regular, /// and /** **/ for natspec comments (Doxygen tags)
 
-reentrancy attacks
-
-hashing multiple values
-
-generating random int
-
-using libraries
-
-a file can have multiple smart contracts
-
-each instance of a smart contract has an address on the block chain
-
-state variables and local variables "shadowing a variable"
+### Example Contract With Keywords
 
 ```jsx
-pragma solidity ^0.5.0; //pragma >=, <???
+pragma solidity ^0.5.0; //comment
+/*
+Multiline
+Comments
+*/
+import `./AnotherContract.sol'; // avoid using ../
 
 contract SimpleStorage {
     uint stateVar;
+		string public otherVar; // has automatically created getter function
 
+		constructor() public {
+			// initialize stuff
+		}
+		/**
+		@title natspec comments
+    @notice return automatically created documentation
+		@param _localVar is a local variable
+		**/
     function set(uint _localVar) public {
         stateVar = _localVar;
     }
@@ -159,31 +144,67 @@ contract SimpleStorage {
 }
 ```
 
-## Variable Types
+Compiling a smart contract produces an ABI (application binary interface) as well as bytecode (executable on EVM)
 
-### Fixed Size
+Time in Solidity - now returns a unix time. Default unit of time is seconds. You can also use the keywords minutes, hours, days, weeks
 
-uint256
+Natspec comments -
 
-bool
+```jsx
+@dev, @return, @title, @notice, @author, @file, @param, @version
+```
 
-uint
+## Variables
 
-bytes32
+There are two scopes of variables in solidity: state variables, accessible within the entire smart contract, and local variables, which are only accessible in the function in which they are declared.
 
-address stores a blockchain address
+State variables are stored on the blockchain when a contract is deployed.
 
-address payable allows you to send ether with the smart contract to this address. Address payable can be cast to address, but not vice versa
+State variables which are declared as public are automatically created by the solidity compiler with a getter function which has the same name as the variable. For public arrays and mappings, the compiler creates a function which you pass an argument to in order to access a specific element
 
-### Variable Size
+This keyword in solidity refers to the current contract
 
-bytes
+Variables can be made constant to save gas (means they can't be changed at all)
 
-string
+Immutable means they can't change once the contract is compiled.
+
+### Value Types
+
+Value types are always copied when used in an assignment. 
+
+bool - can be true or false. Operators: `!, &&, || , ==, !=`
+
+int/uint(size) - can be signed or unsigned, and size can be specified as any number of bits between 8-256. If size is not specified, they will be 256 bits. Bitwise Operators: `<, >, =, &, |, ^(xor), ~, >>, <<` General Operators: `+,-,*,/,&,**`
+
+bytes32 - a set size bit array - has similar methods as uint - you can access items by index like any array.
+
+fixed point exists in solidity, but is not fully supported.
+
+address - stores an eth address (20 bytes). Has the methods .balance, .transfer, .send, .call, .callcode, .delegatetransfer
+
+transfer costs 2300 wei
+
+address payable - allows you to send ether with the smart contract to this address. It has the additional methods send and transfer. Address payable can be cast to address, but not vice versa. msg.sender is an address payable. 
+
+contract - every contract is a variable of type contract. it can be implicity converted to what it inherits from, and explicity converted to/from an address
+
+type(c) gives you information about a contract - including its .name, its .creationCode, and its .runtimeCode
+
+### Reference Types (variable size)
+
+Reference type (also referred to as complex types in solidity docs) have values which can be modified through multiple names - they are not copied whenever they are used. They must be given an explicit memory location when instantiated. 
+
+bytes - a dynamically sized byte array
+
+string - utf8, also dynamically sized
 
 ### Arrays
 
 storage arrays - stay in the blockchain - array `uint[] public ids;`
+
+arrayName.length
+
+arrayName.pop(index);
 
 arrayName.push(element);
 
@@ -191,7 +212,13 @@ arrayName[index];
 
 delete arrayName[index]
 
-memory arrays - just locally stored in the function they are used. declared using the memory keyword `type[] memory arrayName - new type[](#)` cannot have a dynamic size - must be instantiated with a number
+Arrays can be declared with a specific size `uint[n] arrName;` creates an array of n items.
+
+You can make multidimensional arrays  `uint[][] arrName;`
+
+slicing `arrName[start:end];`
+
+memory arrays - just locally stored in the function they are used. declared using the memory keyword `type[] memory arrayName = new type[](#)` cannot have a dynamic size - must be instantiated with a number
 
 arrays in functions `function fooBar(uint[] memory myArg internal returns(uint[] memory){}`
 
@@ -231,36 +258,21 @@ instantiate with `ENUM name;`
 
 ### Memory Locations
 
-storage - inside blockchain, persistent
+storage - inside blockchain, persistent - this is where state variables go, and is limited to the lifetime of the contract
 
-memory - doesnt change on blockchain, just memory
+memory - doesnt change on blockchain, just memory - this is limited to an external function call
 
 stack - just available in function - not persistent or memory
 
-calldata - only available in external/public where the data comes from a transaction with something external
-
-### Visibility Keywords
-
-private (default) - not really private because it is on the blockchain
-
-public - can be read outside smart contract
-
-internal
-
-external
+calldata - only available in external/public functions where the data comes from a transaction with something external. Calldata is a special location that contains function arguments - only available, and also required for the parameters of external contract functions
 
 ## Functions
 
-### Function Modifier Keywords
+In general, functions have a name, modifiers, a defined visibility, and may or may not have a returns definition.
 
-view (previously constant) returns a value and can not modify
+Arguments and returns must have a specified type.
 
-pure just does a computation
-
-```jsx
-function name() pure/view/public returns(type <memory/calldata>) {
-}
-```
+Return variables must have a memory location
 
 ### Function Visibility Keywords
 
@@ -270,37 +282,60 @@ external - only can be called from the outside
 
 internal - can be called within smart contracts in the solidity file and those which inherit from it
 
-private - can only be called within the smart contract
+private (default) - can only be called within the smart contract. It is not really private because it is on the blockchain
+
+### Function Modifier Keywords
+
+view (previously constant) returns a value and can not modify the state
+
+pure just does a computation, it can not read from or modify the state
 
 payable - function must be external to be payable. this means that you can send ether.
 
-mapping
+```jsx
+function name() pure/view visibility returns(type <memory/calldata>) {
+}
+```
+
+In returns, you must either explicitly assign the variables which are returned in the returns statement itself, or specify return in the body of the function, as well as the type in the returns.
+
+If the function returns a complex type, there must be a specified memory location for the return. 
 
 ## Built-in Variables
 
 transaction - tx.origin (original sender address)
 
-messages - msg.value, msg.sender (most recent call)
+messages - msg.value, msg.data, msg.sender is the ETH address which is calling the function (the most recent call)
 
 blocks - block.timestamp,
 
-.on(confirmation???)
+## Special Functions
 
-## Constructors
+The constructor runs once at the time a contract is instantiated. The receive function can be defined once, and runs when the contract receives a transaction. A contract with no receive goes to the fallback function when it receives ether. If neither exists, the contract cannot receive ether.
 
-`constructor(args) public initialize args`
+### Constructor
 
-admin pattern:
+`constructor(args) public {};`
+
+If the constructor has arguments, all derived contracts must specify each of these arguments.
+
+If the constructor is declared as internal, the contract is 'abstract'
+
+### Receive
+
+`receive() external payable {};`
+
+### Fallback
+
+`fallback() external payable {};`
+
+The fallback function must be external, it cannot return, and it cannot have arguments.
 
 ## Function Modifiers
 
 `modifier myModifier()`
 
 `function foo() external myModifier1 myModifier2 {}`
-
-## Fallback Function
-
-`function() external {}`
 
 ## Libraries
 
@@ -329,37 +364,18 @@ while(bool) {
 	}
 }
 break, continue
+try {
+} catch{
+}
+do {
+} while(something){
+}
+return
 ```
-
-Constructor
 
 ABI - application binary interface - the set of functions which can interact with the outside world. also reads to a known address
 
-Address
-
-msg.sender
-
-msg.value
-
-modifier
-
-import
-
-require
-
-view/pure
-
-returns 
-
-memory
-
-setdata
-
-storage
-
-internal
-
-using
+An Interface is an abstract contract with no functions, no constructor, no state variables
 
 ## Events
 
@@ -377,23 +393,31 @@ indexed keyword is required to use something as a filter
 
 use a websocket to get realtime events
 
+Anonymous events are cheaper to deploy and to call.
+
 ## Interaction Between Smart Contracts
 
 to interact from a to b, interface of b and address of b are both required. you can use interface keyword or make another contract to define interface
 
 `import OtherContract.sol`
 
+create a contract in another contract using `D new D = new D(args);`
+
+It is possible to create salted contracts???
+
 ## Child Contracts
 
-contract facotry pattern
+contract factory pattern
 
 ```jsx
 function initNewChild()
 	create pointer to addresS? 
-contract Child
+contract Child is Ancestor
 ```
 
 you have to create a function to call child if you want to use child functions with admin mechanism
+
+Multiple inheritance `contract Child is Ancestor, OtherAncestor`
 
 ## Token Transfer
 
@@ -435,11 +459,13 @@ opcodes - ethervm.io
 
 ## _;
 
-2 kinds of assembly
+2 kinds of assembly are functional and instructional
 
 # Remix
 
 in remix, red functions are setters which modify data and therefore send a transaction - blue are those which just call a contract and get data
+
+transactions are shown in the console at the bottom - click to expand
 
 # Truffle
 
@@ -502,6 +528,8 @@ in ganache, blocks are automined
 it generates 10 unlocked addresses by default with 100 fake ether in each. 
 
 # OpenZeppelin
+
+has templates for tokens and more. IERC is an interface to an erc token
 
 # Testing Solidity (Mocha)
 
@@ -678,7 +706,11 @@ borrow ctokens, pay back plus interest
 
 liquidity pool - sends a liquidity token, a liquidity provider sends ether and erco 20 tokens back
 
-gnosis - bet on events in the real world with conditional tokens
+Gnosis - bet on events in the real world with conditional tokens. You can create sub-conditional tokens which combine events for more complex outcomes. 
+
+erc 1155 - combination of erc20 and erc 721 tokens
+
+dutchx
 
 Maker
 
@@ -710,6 +742,14 @@ mint - make token by committing collateral
 
 # Opyn
 
+oToken primitives allow users to hedge risks, create leverage, buy insurance, bet on volatility. 
+
+Framework for generalized put options - minting oTokens is analogous to minting DAI or yTokens. 
+
+Convexity allows anyone to mint options - as long as they have enough collateral for the number of options she wants to mint. 
+
+If options are of the same series, they are fungible with each other.
+
 Convexity Protocol
 
 1. Create oTokens
@@ -717,187 +757,179 @@ Convexity Protocol
 3. liquidate undercollateralized vaults
 4. exercise tokens during expiry window
 
-oToken
+## OToken - Create/Manage Options in Existing Markets
 
-Reverse Dutch Auction
+createETH/ERC20CollateralOption(amount, receiver)
 
-# Options
+addETH/ERC20CollateralOption(amount, receiver)
 
-put
+createAndSellETH/ERC20CollateralOption(amount, receiver)
 
-call
+addAndSellETH/ERC20CollateralOption(amount, vault, receiver)
 
-price
+openVault() - creates an empty vault
 
-premium
+addETH/ERC20Collateral(vaultOwner)
 
-option series
+issueOTokens(oTokensToIssue, receiver)
 
-expiry
+removeCollateral(amtToRemove)
 
-physical/cash settlement
+burnOTokens(amtToBurn)
 
-collateral ratio
+liquidate(vaultOwner, oTokensToLiquidate)
 
-NPV
+exercise(oTokensToExercise, vaultsToExerciseFrom)
 
-delta, theta, gamma, vega, rho
+redeemVaultBalance()
 
-long/short
+removeUnderlying()
 
-American/European/Bermudan
+strikePrice()
 
-underlying
+oTokenExchangeRate()
 
-# Javascript
+expiry()
 
-## Dom Manipulation
+underlyingRequiredToExercise(oTokensToExercise)
 
-querySelector
+hasExpired()
 
-querySelectorAll
+isExerciseWindow()
 
-getElementById
+hasVault()
 
-getElementsByClassName
+getVaultByIndex(vaultIndex)
 
-getElementsByTagName
+isUnsafe()
 
-forEach
+numVaults()
 
-innerText
+maxOTokensIssuable(collateralAmt)
 
-getAttribute
+## OptionsExchange (Buy/Sell)
 
-setAttribute
+buyOTokens(receiver, oTokenAddress, paymentTokenAddress, oTokensToBuy)
 
-classList toggle add remove textContent includes
+sellOTokens(receiver, oTokenAddress, paymentTokenAddress, oTokensToBuy)
 
-$domRefererence = getElementById('id');
+premiumToPay(receiver, oTokenAddress, paymentTokenAddress, oTokensToBuy)
 
-.addEventListener
+premiumReceived(receiver, oTokenAddress, paymentTokenAddress, oTokensToBuy)
 
-stack stores pointers and primitive types
+## OptionsFactory (New Markets)
 
-heap stores reference types
+createOptionsContract(collateralType, underlyingType, strikePrice, strikeAsset, payoutType, expiry)
 
-preventDefault
+getNumberOfOptionsContracts
 
-Promises
+supportsAsset(asset)
 
-async/await
+# Unorganized
 
-arrow functions
+byzantine fault tolerant
 
-imports
+sybil attacks
 
-# React
+utxo
 
-# Svelte
+RANDOM STUFF
+pragma experiental abiencoder v2
 
-structure
+READING FROM THE STATE??
 
-App.svelte
+gives state variables, .balance, info about block, tx, msg, any non-pure functions, assembly.
 
-export - set from outside
+one wei = 10^-18 ether
 
-UI/Data Binding
+szabo - 12
 
-2 way data binding
+finney 15
 
-Reactive value
+gwei??
 
-Loops - Unique Key
+an address/account on ethereum is used to track a balance - it has a private key (password) and a public key (username)
 
-Inline event handlers
+in order to change a balance and hack the blockchain, you would need the computing power to change all previous transactions
 
-Components
+gas is the cost of transactions on ethereum
 
-Global/Component CSS
+smart contracts are programs which are accessible to everyone on the network
 
-Props (implied prop name = var name)
+ethereum allows you to create your own token - ERC 20 describes the requirements for doing so
 
-Event Forwarding/ Modifiers
+ERC 20 - fungible
 
-Slots
+ERC 721 - non-fungible
 
-Custom Events
+EVM is the ethereum virtual machine
 
-# Webpack
+Dapp - once a dapp is deployed it is permanently on the blockchain and can't be fixed
 
-monitors what is in the client folder - compiles modern js into vanilla js that can be used in many browsers. Also concats everything into a single file, resulting in a bundle - also creates a server
+It consists of 3 parts - smart contracts, testing, and front end
 
-webpack.config.js - specifies the entry and output, in addition to a dev server
+transaction
 
-# Vim
+receipt - contains transactionHash, blockHas, mined, from, to, events
 
-hjkl
+gwei
 
-:sp
+location
 
-:vsp
+hash
 
-dd
+ethereum clients - GETH, Parity, Trinity
 
-yy
+The original Ethereum is limited by TPS, block time, duplicate responsibility. Ethereum 2.0 is a proposed set of solutions which include:
 
-ctrl + z
+layer 1 (in ethereum): sharding - breaks up network into groups of computers and proof of stake (casper) which reduces block time and helps scaling
 
-fg
+layer 2 (on top of ethereum):plasma allows certain stuff to happen on a side chain, state channels are 2 way communication channels which do work on the side and then put the result back onto the block chain
 
-operators - cdygn~!><=
+Native Assets
 
-text objects - aw, iw, ap, ab
+Tokens
 
-%
+ethereum research forum 
 
-$
+solc - solidity compiler
 
-+
+web3 - library to communicate with clients
 
-fwbe
+remix - a solidity IDE
 
-HML
+truffle - a framework for dapps written in node.js
 
-zt, zz, zb
+ganache - a local dev environment for blockchain
 
-:e edit
+metamask - an ethereum wallet packaged as a browser extension
 
-:s/something/else/g (and options)
+a dapp involves communication from wallet to frontend to smart contract 
 
-:buffers, :bp, :bn
+smart contracts can be written in solidity, vyper, LLL
 
-:hls!
+browser on your computer interacts with a website, which interacts with the blockchain, which interacts with smart contracts
 
-*,#
+eth blockchain includes EVM, storage, and consensus and runs on top of os and hardware
 
-ctrl + ], ctrl + t
+the building blocks of dapps
 
-ctrl w+ s (horizontal) v (vertical)
-
-open terminal buffer
-
-ctags
-
-tabs are window containers
-
-windows are buffer viewpoints
-
-buffers for file proxies
-
-running bash from vim 
-
-# Tmux
-
-ctrl+b
-
-% horizontal split
-
-" vertical split
-
-d - delete pane
-
-:resize pane -UDLR #rows/columns 
+1. code contract
+    1. pragma statement
+    2. contract Name {}
+    3. define state variables in contract
+    4. define functions in contract `function add(uint id) public{}`
+    5. create js test file in tests/test
+        1. `const contract = artifacts.require('contract');`
+        2. `contract('Name', () => {})`
+        3. `it()`, computations assert
+2. `truffle develop`
+3. deploy contract `migrate --reset`
+4. copy ABI/address 
+5. install frontend dependencies `npm install` and `npm start`
+6. instantiate web3
+7. instantiate contract instance
+8. call/transact with contract and get/modify data
 
 # random notes
 
@@ -914,3 +946,23 @@ unpkg allows you to use any node package without installing
 how to tell if another address is a contract or regular address
 
 ABIEncoderV2Pragma - enable experimental features
+
+Wallet communicates with frontend on clientside. frontend communicates with server and an ethereum node. ethereum node communicates with smart contract on blockchain
+
+inheritance
+
+reentrancy attacks
+
+hashing multiple values
+
+generating random int
+
+using libraries
+
+a file can have multiple smart contracts
+
+each instance of a smart contract has an address on the block chain
+
+.on(confirmation???)
+
+accessed externally - this.??
